@@ -1,0 +1,35 @@
+---
+- name: Mise à jour du cache APT
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Upgrade de tous les paquets
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+
+- name: Installation des paquets essentiels
+  apt:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - unzip
+      - gnupg
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - net-tools
+    state: present
+
+- name: Vérification de la version du système
+  command: lsb_release -a
+  register: system_info
+  changed_when: false
+
+- name: Affichage des informations système
+  debug:
+    var: system_info.stdout_lines

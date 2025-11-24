@@ -1,0 +1,61 @@
+---
+- name: Installation de Java (prérequis pour Jenkins)
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+
+- name: Ajout de la clé GPG Jenkins
+  shell: |
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+  args:
+    creates: /usr/share/keyrings/jenkins-keyring.asc
+
+- name: Ajout du dépôt Jenkins
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+  args:
+    creates: /etc/apt/sources.list.d/jenkins.list
+
+- name: Mise à jour du cache APT
+  apt:
+    update_cache: yes
+
+- name: Installation de Jenkins
+  apt:
+    name: jenkins
+    state: present
+
+- name: Démarrage et activation de Jenkins
+  systemd:
+    name: jenkins
+    state: started
+    enabled: yes
+
+- name: Attendre que Jenkins démarre
+  wait_for:
+    port: 8080
+    delay: 10
+    timeout: 60
+
+- name: Récupération du mot de passe initial Jenkins
+  command: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: jenkins_password
+  changed_when: false
+  ignore_errors: yes
+
+- name: Affichage du mot de passe initial Jenkins
+  debug:
+    msg: "Mot de passe initial Jenkins: {{ jenkins_password.stdout }}"
+  when: jenkins_password.stdout is defined
+
+- name: Ajout de l'utilisateur Jenkins au groupe docker
+  user:
+    name: jenkins
+    groups: docker
+    append: yes
+
+- name: Redémarrage de Jenkins pour appliquer les groupes
+  systemd:
+    name: jenkins
+    state: restarted

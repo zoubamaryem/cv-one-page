@@ -1,0 +1,9 @@
+---
+- name: Configuration complète de DEVOPS-LAB
+  hosts: devops_lab
+  become: yes
+  roles:
+    - system_update
+    - docker
+    - terraform
+    - jenkins

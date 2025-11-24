@@ -1,0 +1,38 @@
+---
+- name: Installation des dépendances Terraform
+  apt:
+    name:
+      - gnupg
+      - software-properties-common
+      - curl
+    state: present
+
+- name: Ajout de la clé GPG HashiCorp
+  shell: |
+    wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+- name: Ajout du dépôt HashiCorp
+  shell: |
+    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
+  args:
+    creates: /etc/apt/sources.list.d/hashicorp.list
+
+- name: Mise à jour du cache APT
+  apt:
+    update_cache: yes
+
+- name: Installation de Terraform
+  apt:
+    name: terraform
+    state: present
+
+- name: Vérification de l'installation Terraform
+  command: terraform --version
+  register: terraform_version
+  changed_when: false
+
+- name: Affichage de la version Terraform
+  debug:
+    var: terraform_version.stdout
